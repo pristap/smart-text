@@ -1,5 +1,3 @@
-# SmartText - Parsing #hashtags & @mentions from plain text
-
 ## Summary
 
   SmartText is an Elm library for parsing hashtags & mentions from plain text input.
