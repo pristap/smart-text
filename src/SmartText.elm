@@ -61,6 +61,6 @@ combinedRegex : String
 combinedRegex =
     hashtagRegex ++ "|" ++ mentionRegex
 hashtagRegex : String
-hashtagRegex = "\\B#\\w*[a-zA-Z_]+\\w*"
+hashtagRegex = "\\B#\\w*[a-zA-Z0-9_-]+\\w*"
 mentionRegex : String
-mentionRegex = "\\B@\\w*[a-zA-Z_]+\\w*"
+mentionRegex = "\\B@\\w*[a-zA-Z0-9_-]+\\w*"

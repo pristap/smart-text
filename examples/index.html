@@ -8366,7 +8366,12 @@ var _elm_lang$html$Html_Events$Options = F2(
 	function (a, b) {
 		return {stopPropagation: a, preventDefault: b};
 	});
-var _user$project$SmartText$hashtagRegex = '\\B#\\w*[a-zA-Z_]+\\w*';
+var _user$project$SmartText$mentionRegex = '\\B@\\w*[a-zA-Z0-9_-]+\\w*';
+var _user$project$SmartText$hashtagRegex = '\\B#\\w*[a-zA-Z0-9_-]+\\w*';
+var _user$project$SmartText$combinedRegex = A2(
+	_elm_lang$core$Basics_ops['++'],
+	_user$project$SmartText$hashtagRegex,
+	A2(_elm_lang$core$Basics_ops['++'], '|', _user$project$SmartText$mentionRegex));
 var _user$project$SmartText$combine = F3(
 	function (firstList, secondList, resultList) {
 		combine:
@@ -8391,9 +8396,16 @@ var _user$project$SmartText$combine = F3(
 				if (_p0._1.ctor === '[]') {
 					return resultList;
 				} else {
-					var _v4 = _p0._1,
+					var _v4 = _p0._1._1,
 						_v5 = {ctor: '[]'},
-						_v6 = resultList;
+						_v6 = A2(
+						_elm_lang$core$Basics_ops['++'],
+						resultList,
+						{
+							ctor: '::',
+							_0: _p0._1._0,
+							_1: {ctor: '[]'}
+						});
 					firstList = _v4;
 					secondList = _v5;
 					resultList = _v6;
@@ -8405,75 +8417,101 @@ var _user$project$SmartText$combine = F3(
 var _user$project$SmartText$Text = function (a) {
 	return {ctor: 'Text', _0: a};
 };
-var _user$project$SmartText$otherText = function (text) {
-	return _user$project$SmartText$Text(text);
+var _user$project$SmartText$Mention = function (a) {
+	return {ctor: 'Mention', _0: a};
 };
 var _user$project$SmartText$HashTag = function (a) {
 	return {ctor: 'HashTag', _0: a};
 };
-var _user$project$SmartText$hashTag = function (text) {
-	return _user$project$SmartText$HashTag(text);
+var _user$project$SmartText$markText = function (text) {
+	var _p1 = _elm_lang$core$String$uncons(text);
+	_v7_2:
+	do {
+		if ((_p1.ctor === 'Just') && (_p1._0.ctor === '_Tuple2')) {
+			switch (_p1._0._0.valueOf()) {
+				case '#':
+					return _user$project$SmartText$HashTag(text);
+				case '@':
+					return _user$project$SmartText$Mention(text);
+				default:
+					break _v7_2;
+			}
+		} else {
+			break _v7_2;
+		}
+	} while(false);
+	return _user$project$SmartText$Text(text);
 };
 var _user$project$SmartText$parse = function (text) {
 	var regularText = A2(
 		_elm_lang$core$List$map,
-		_user$project$SmartText$otherText,
+		_user$project$SmartText$markText,
 		A3(
 			_elm_lang$core$Regex$split,
 			_elm_lang$core$Regex$All,
-			_elm_lang$core$Regex$regex(_user$project$SmartText$hashtagRegex),
+			_elm_lang$core$Regex$regex(_user$project$SmartText$combinedRegex),
 			text));
 	var matches = A3(
 		_elm_lang$core$Regex$find,
 		_elm_lang$core$Regex$All,
-		_elm_lang$core$Regex$regex(_user$project$SmartText$hashtagRegex),
+		_elm_lang$core$Regex$regex(_user$project$SmartText$combinedRegex),
 		text);
-	var hashtags = A2(
+	var marked = A2(
 		_elm_lang$core$List$map,
-		_user$project$SmartText$hashTag,
+		_user$project$SmartText$markText,
 		A2(
 			_elm_lang$core$List$map,
 			function (_) {
 				return _.match;
 			},
 			matches));
-	var _p1 = matches;
-	if (_p1.ctor === '[]') {
-		return regularText;
-	} else {
-		return _elm_lang$core$Native_Utils.eq(_p1._0.index, 0) ? A3(
-			_user$project$SmartText$combine,
-			hashtags,
-			regularText,
-			{ctor: '[]'}) : A3(
-			_user$project$SmartText$combine,
-			regularText,
-			hashtags,
-			{ctor: '[]'});
-	}
+	return A3(
+		_user$project$SmartText$combine,
+		regularText,
+		marked,
+		{ctor: '[]'});
 };
 var _user$project$HtmlBuilder$generateNode = function (element) {
 	var _p0 = element;
-	if (_p0.ctor === 'HashTag') {
-		var _p1 = _p0._0;
-		var url = A2(
-			_elm_lang$core$String$append,
-			A2(_elm_lang$core$String$dropLeft, 1, _p1),
-			'https://twitter.com/hashtag/');
-		return A2(
-			_elm_lang$html$Html$a,
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html_Attributes$href(url),
-				_1: {ctor: '[]'}
-			},
-			{
-				ctor: '::',
-				_0: _elm_lang$html$Html$text(_p1),
-				_1: {ctor: '[]'}
-			});
-	} else {
-		return _elm_lang$html$Html$text(_p0._0);
+	switch (_p0.ctor) {
+		case 'HashTag':
+			var _p1 = _p0._0;
+			var url = A2(
+				_elm_lang$core$Basics_ops['++'],
+				'https://twitter.com/hashtag/',
+				A2(_elm_lang$core$String$dropLeft, 1, _p1));
+			return A2(
+				_elm_lang$html$Html$a,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$href(url),
+					_1: {ctor: '[]'}
+				},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text(_p1),
+					_1: {ctor: '[]'}
+				});
+		case 'Mention':
+			var _p2 = _p0._0;
+			var url = A2(
+				_elm_lang$core$Basics_ops['++'],
+				'https://twitter.com/',
+				A2(_elm_lang$core$String$dropLeft, 1, _p2));
+			return A2(
+				_elm_lang$html$Html$a,
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html_Attributes$href(url),
+					_1: {ctor: '[]'}
+				},
+				{
+					ctor: '::',
+					_0: _elm_lang$html$Html$text(_p2),
+					_1: {ctor: '[]'}
+				});
+		default:
+			return _elm_lang$html$Html$text(_p0._0);
 	}
 };
 var _user$project$HtmlBuilder$generateHtml = function (text) {
@@ -8485,15 +8523,37 @@ var _user$project$HtmlBuilder$generateHtml = function (text) {
 			_user$project$HtmlBuilder$generateNode,
 			_user$project$SmartText$parse(text)));
 };
-var _user$project$Main$init = A2(
-	_elm_lang$core$Platform_Cmd_ops['!'],
-	{
-		items: {ctor: '[]'}
-	},
-	{ctor: '[]'});
+var _user$project$Main$init = function () {
+	var sample = {
+		ctor: '::',
+		_0: 'Sample #smart_text 👨🏻‍💻 with ❤️ by @kexoth',
+		_1: {ctor: '[]'}
+	};
+	return A2(
+		_elm_lang$core$Platform_Cmd_ops['!'],
+		{
+			items: sample,
+			parsed: A2(_elm_lang$core$List$map, _user$project$SmartText$parse, sample)
+		},
+		{ctor: '[]'});
+}();
 var _user$project$Main$subscriptions = function (model) {
 	return _elm_lang$core$Platform_Sub$none;
 };
+var _user$project$Main$contentTextareaStyle = _elm_lang$html$Html_Attributes$style(
+	{
+		ctor: '::',
+		_0: {ctor: '_Tuple2', _0: 'width', _1: '100%'},
+		_1: {
+			ctor: '::',
+			_0: {ctor: '_Tuple2', _0: 'background', _1: '#E8E6E8'},
+			_1: {
+				ctor: '::',
+				_0: {ctor: '_Tuple2', _0: 'border', _1: 'none'},
+				_1: {ctor: '[]'}
+			}
+		}
+	});
 var _user$project$Main$removeFromList = F2(
 	function (index, list) {
 		return A2(
@@ -8522,12 +8582,19 @@ var _user$project$Main$update = F2(
 		var _p0 = msg;
 		switch (_p0.ctor) {
 			case 'ChangeItem':
+				var _p2 = _p0._1;
+				var _p1 = _p0._0;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
 						{
-							items: A3(_user$project$Main$replaceInList, _p0._0, _p0._1, model.items)
+							items: A3(_user$project$Main$replaceInList, _p1, _p2, model.items),
+							parsed: A3(
+								_user$project$Main$replaceInList,
+								_p1,
+								_user$project$SmartText$parse(_p2),
+								model.parsed)
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
@@ -8544,29 +8611,109 @@ var _user$project$Main$update = F2(
 									ctor: '::',
 									_0: '',
 									_1: {ctor: '[]'}
+								}),
+							parsed: A2(
+								_elm_lang$core$List$append,
+								model.parsed,
+								{
+									ctor: '::',
+									_0: {
+										ctor: '::',
+										_0: _user$project$SmartText$Text(''),
+										_1: {ctor: '[]'}
+									},
+									_1: {ctor: '[]'}
 								})
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			default:
+				var _p3 = _p0._0;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
 						{
-							items: A2(_user$project$Main$removeFromList, _p0._0, model.items)
+							items: A2(_user$project$Main$removeFromList, _p3, model.items),
+							parsed: A2(_user$project$Main$removeFromList, _p3, model.parsed)
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 		}
 	});
-var _user$project$Main$Model = function (a) {
-	return {items: a};
-};
+var _user$project$Main$Model = F2(
+	function (a, b) {
+		return {items: a, parsed: b};
+	});
 var _user$project$Main$RemoveItem = function (a) {
 	return {ctor: 'RemoveItem', _0: a};
 };
 var _user$project$Main$AddItem = {ctor: 'AddItem'};
+var _user$project$Main$ChangeItem = F2(
+	function (a, b) {
+		return {ctor: 'ChangeItem', _0: a, _1: b};
+	});
+var _user$project$Main$viewItem = F2(
+	function (index, content) {
+		return A2(
+			_elm_lang$html$Html$div,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$class('row'),
+				_1: {ctor: '[]'}
+			},
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$div,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$class('col-12 col-sm-6'),
+						_1: {ctor: '[]'}
+					},
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_lang$html$Html$textarea,
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html_Events$onInput(
+									_user$project$Main$ChangeItem(index)),
+								_1: {
+									ctor: '::',
+									_0: _user$project$Main$contentTextareaStyle,
+									_1: {
+										ctor: '::',
+										_0: _elm_lang$html$Html_Attributes$placeholder('Enter Text'),
+										_1: {ctor: '[]'}
+									}
+								}
+							},
+							{
+								ctor: '::',
+								_0: _elm_lang$html$Html$text(content),
+								_1: {ctor: '[]'}
+							}),
+						_1: {ctor: '[]'}
+					}),
+				_1: {
+					ctor: '::',
+					_0: A2(
+						_elm_lang$html$Html$div,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$class('col-12 col-sm-6'),
+							_1: {ctor: '[]'}
+						},
+						{
+							ctor: '::',
+							_0: _user$project$HtmlBuilder$generateHtml(content),
+							_1: {ctor: '[]'}
+						}),
+					_1: {ctor: '[]'}
+				}
+			});
+	});
 var _user$project$Main$view = function (model) {
 	return A2(
 		_elm_lang$html$Html$section,
@@ -8580,7 +8727,7 @@ var _user$project$Main$view = function (model) {
 			_0: A2(
 				_elm_lang$html$Html$div,
 				{ctor: '[]'},
-				A2(_elm_lang$core$List$map, _user$project$HtmlBuilder$generateHtml, model.items)),
+				A2(_elm_lang$core$List$indexedMap, _user$project$Main$viewItem, model.items)),
 			_1: {
 				ctor: '::',
 				_0: A2(
@@ -8601,10 +8748,6 @@ var _user$project$Main$view = function (model) {
 };
 var _user$project$Main$main = _elm_lang$html$Html$program(
 	{init: _user$project$Main$init, view: _user$project$Main$view, update: _user$project$Main$update, subscriptions: _user$project$Main$subscriptions})();
-var _user$project$Main$ChangeItem = F2(
-	function (a, b) {
-		return {ctor: 'ChangeItem', _0: a, _1: b};
-	});
 var Elm = {};
 Elm['Main'] = Elm['Main'] || {};
 if (typeof _user$project$Main$main !== 'undefined') {
