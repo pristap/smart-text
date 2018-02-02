@@ -17,8 +17,8 @@ type Element
     -- | Url String
 
 {-| Parsing Function
-    tweet = SmartText.parse "Sample #smart_text 👨🏻‍💻 with ❤️ by @kexoth."
-    > [Text "Sample ",HashTag "#smart_text",Text " 👨🏻‍💻 with ❤️ by ",Mention "@kexoth",Text "."]
+    SmartText.parse "Sample #smart_text 👨🏻‍💻 with ❤️ by @kexoth."
+    --> [Text "Sample ",HashTag "#smart_text",Text " 👨🏻‍💻 with ❤️ by ",Mention "@kexoth",Text "."]
         : List SmartText.Element
 -}
 parse : String -> List Element
